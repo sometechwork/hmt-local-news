@@ -36,7 +36,7 @@ function stw_sa_register_cpt_and_tax() {
 		'menu_icon'          => 'dashicons-megaphone',
 		'supports'           => array( 'title', 'editor', 'excerpt', 'author', 'revisions' ),
 		'has_archive'        => false,
-		'rewrite'            => array( 'slug' => 'announcements' ),
+		'rewrite' => array( 'slug' => 'local-news' ),
 	);
 
 	register_post_type( 'announcement', array_merge( $args, array(
