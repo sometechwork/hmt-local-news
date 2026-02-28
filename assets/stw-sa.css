@@ -1,0 +1,24 @@
+.stw-sa-list { display: grid; gap: 12px; }
+.stw-sa-item { padding: 12px; border: 1px solid #e5e5e5; border-radius: 8px; }
+.stw-sa-title { margin: 0 0 6px; }
+.stw-sa-meta { font-size: 12px; opacity: 0.7; margin-bottom: 8px; }
+.stw-sa-readmore { cursor: pointer; }
+
+.stw-sa-modal { display: none; }
+.stw-sa-modal.is-open { display: block; }
+
+.stw-sa-modal__overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+}
+.stw-sa-modal__panel {
+  position: fixed; left: 50%; top: 10%;
+  transform: translateX(-50%);
+  width: min(800px, calc(100% - 24px));
+  max-height: 80vh;
+  overflow: auto;
+  background: #fff;
+  border-radius: 10px;
+  padding: 16px;
+}
+.stw-sa-modal__close { float: right; cursor: pointer; }
+.stw-sa-no-scroll { overflow: hidden; }
