@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: School Announcements
+ * Plugin Name: Local News
  * Description: Adds an Announcements post type and School taxonomy for per-school news.
  * Version: 0.1.0
  * Author: Your Name
@@ -12,19 +12,19 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 function stw_sa_register_cpt_and_tax() {
 
-	// 1) Custom Post Type: announcement
+	// 1) Custom Post Type: Local News
 	$labels = array(
-		'name'               => 'Announcements',
-		'singular_name'      => 'Announcement',
+		'name'               => 'Local News',
+		'singular_name'      => 'Local News Item',
 		'add_new'            => 'Add New',
-		'add_new_item'       => 'Add New Announcement',
-		'edit_item'          => 'Edit Announcement',
-		'new_item'           => 'New Announcement',
-		'view_item'          => 'View Announcement',
-		'search_items'       => 'Search Announcements',
-		'not_found'          => 'No announcements found',
-		'not_found_in_trash' => 'No announcements found in Trash',
-		'menu_name'          => 'Announcements',
+		'add_new_item'       => 'Add New Local News',
+		'edit_item'          => 'Edit Local News',
+		'new_item'           => 'New Local News',
+		'view_item'          => 'View Local News',
+		'search_items'       => 'Search Local News',
+		'not_found'          => 'No local news found',
+		'not_found_in_trash' => 'No local news found in Trash',
+		'menu_name'          => 'Local News',
 	);
 
 	$args = array(
