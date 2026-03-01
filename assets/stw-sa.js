@@ -1,3 +1,5 @@
+console.log("STW_SA script loaded", window.STW_SA);
+
 (function () {
   function qs(root, sel) { return root.querySelector(sel); }
 
