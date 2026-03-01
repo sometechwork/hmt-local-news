@@ -4,7 +4,7 @@
  * Plugin Name: Local News
  * Description: Adds an Announcements post type and School taxonomy for per-school news.
  * Version: 0.1.0
- * Author: Your Name
+ * Author: Vishal Sanap(STW)
  */
 
 if (! defined('ABSPATH')) {
