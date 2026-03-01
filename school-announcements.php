@@ -335,6 +335,10 @@ register_activation_hook(__FILE__, 'stw_sa_activate');
 
 function stw_sa_shortcode_school_announcements($atts)
 {
+
+    wp_enqueue_script( 'stw-sa' );
+    wp_enqueue_style( 'stw-sa' );
+    
     $atts = shortcode_atts(
         array(
             'school' => '',   // slug, eg "munich"
@@ -455,43 +459,29 @@ function stw_sa_rest_get_announcement(WP_REST_Request $request)
     );
 }
 
-function stw_sa_enqueue_assets()
-{
-    // Only load on pages where shortcode is used.
-    if (! is_singular()) {
-        return;
-    }
+function stw_sa_register_assets() {
+	$ver = '0.1.0';
 
-    global $post;
-    if (! $post || stripos($post->post_content, '[school_announcements') === false) {
-        return;
-    }
+	wp_register_script(
+		'stw-sa',
+		plugins_url( 'assets/stw-sa.js', __FILE__ ),
+		array(),
+		$ver,
+		true
+	);
 
-    $ver = '0.1.0';
+	wp_localize_script( 'stw-sa', 'STW_SA', array(
+		'restUrl' => esc_url_raw( rest_url( 'stw-sa/v1/announcement/' ) ),
+	) );
 
-    wp_register_script(
-        'stw-sa',
-        plugins_url('assets/stw-sa.js', __FILE__),
-        array(),
-        $ver,
-        true
-    );
-
-    wp_localize_script('stw-sa', 'STW_SA', array(
-        'restUrl' => esc_url_raw(rest_url('stw-sa/v1/announcement/')),
-    ));
-
-    wp_enqueue_script('stw-sa');
-
-    wp_register_style(
-        'stw-sa',
-        plugins_url('assets/stw-sa.css', __FILE__),
-        array(),
-        $ver
-    );
-    wp_enqueue_style('stw-sa');
+	wp_register_style(
+		'stw-sa',
+		plugins_url( 'assets/stw-sa.css', __FILE__ ),
+		array(),
+		$ver
+	);
 }
-add_action('wp_enqueue_scripts', 'stw_sa_enqueue_assets');
+add_action( 'wp_enqueue_scripts', 'stw_sa_register_assets' );
 
 function stw_sa_force_teacher_draft_only($data, $postarr)
 {

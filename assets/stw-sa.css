@@ -22,3 +22,6 @@
 }
 .stw-sa-modal__close { float: right; cursor: pointer; }
 .stw-sa-no-scroll { overflow: hidden; }
+
+.stw-sa-modal__overlay { z-index: 99998; }
+.stw-sa-modal__panel { z-index: 99999; }
