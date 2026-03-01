@@ -336,9 +336,9 @@ register_activation_hook(__FILE__, 'stw_sa_activate');
 function stw_sa_shortcode_school_announcements($atts)
 {
 
-    wp_enqueue_script( 'stw-sa' );
-    wp_enqueue_style( 'stw-sa' );
-    
+    wp_enqueue_script('stw-sa');
+    wp_enqueue_style('stw-sa');
+
     $atts = shortcode_atts(
         array(
             'school' => '',   // slug, eg "munich"
@@ -459,29 +459,30 @@ function stw_sa_rest_get_announcement(WP_REST_Request $request)
     );
 }
 
-function stw_sa_register_assets() {
-	$ver = '0.1.0';
+function stw_sa_register_assets()
+{
+    $ver = '0.1.0';
 
-	wp_register_script(
-		'stw-sa',
-		plugins_url( 'assets/stw-sa.js', __FILE__ ),
-		array(),
-		$ver,
-		true
-	);
+    wp_register_script(
+        'stw-sa',
+        plugins_url('assets/stw-sa.js', __FILE__),
+        array('jquery'),
+        $ver,
+        true
+    );
 
-	wp_localize_script( 'stw-sa', 'STW_SA', array(
-		'restUrl' => esc_url_raw( rest_url( 'stw-sa/v1/announcement/' ) ),
-	) );
+    wp_localize_script('stw-sa', 'STW_SA', array(
+        'restUrl' => esc_url_raw(rest_url('stw-sa/v1/announcement/')),
+    ));
 
-	wp_register_style(
-		'stw-sa',
-		plugins_url( 'assets/stw-sa.css', __FILE__ ),
-		array(),
-		$ver
-	);
+    wp_register_style(
+        'stw-sa',
+        plugins_url('assets/stw-sa.css', __FILE__),
+        array(),
+        $ver
+    );
 }
-add_action( 'wp_enqueue_scripts', 'stw_sa_register_assets' );
+add_action('wp_enqueue_scripts', 'stw_sa_register_assets');
 
 function stw_sa_force_teacher_draft_only($data, $postarr)
 {
@@ -503,11 +504,12 @@ function stw_sa_force_teacher_draft_only($data, $postarr)
 }
 add_filter('wp_insert_post_data', 'stw_sa_force_teacher_draft_only', 10, 2);
 
-function stw_sa_get_notify_email() {
-	if ( defined( 'STW_SA_NOTIFY_EMAIL' ) && STW_SA_NOTIFY_EMAIL ) {
-		return sanitize_email( STW_SA_NOTIFY_EMAIL );
-	}
-	return sanitize_email( get_option( 'admin_email' ) );
+function stw_sa_get_notify_email()
+{
+    if (defined('STW_SA_NOTIFY_EMAIL') && STW_SA_NOTIFY_EMAIL) {
+        return sanitize_email(STW_SA_NOTIFY_EMAIL);
+    }
+    return sanitize_email(get_option('admin_email'));
 }
 
 function stw_sa_notify_on_teacher_draft_create($new_status, $old_status, $post)
@@ -549,3 +551,11 @@ function stw_sa_notify_on_teacher_draft_create($new_status, $old_status, $post)
     wp_mail($to, $subject, $message);
 }
 add_action('transition_post_status', 'stw_sa_notify_on_teacher_draft_create', 10, 3);
+
+function stw_sa_autoptimize_exclude($exclude)
+{
+    // Exclude our handle/file from Autoptimize aggregation.
+    $exclude .= ',stw-sa.js,stw-sa';
+    return $exclude;
+}
+add_filter('autoptimize_filter_js_exclude', 'stw_sa_autoptimize_exclude');
