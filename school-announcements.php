@@ -407,12 +407,16 @@ function stw_sa_shortcode_school_announcements($atts)
             $q->the_post();
             $post_id = get_the_ID();
 
-            echo '<article class="stw-sa-item">';
+            $has_thumb = has_post_thumbnail();
+            $classes = $has_thumb ? 'stw-sa-item stw-sa-item--has-thumb' : 'stw-sa-item';
+
+            echo '<article class="' . esc_attr($classes) . '">';
             
-            if (has_post_thumbnail()) {
+            if ($has_thumb) {
                 echo '<div class="stw-sa-thumb">' . get_the_post_thumbnail($post_id, 'medium') . '</div>';
             }
             
+            echo '<div class="stw-sa-content">';
             echo '<h3 class="stw-sa-title">' . esc_html(get_the_title()) . '</h3>';
             echo '<div class="stw-sa-meta">' . esc_html(get_the_date()) . '</div>';
 
@@ -423,6 +427,7 @@ function stw_sa_shortcode_school_announcements($atts)
             echo '<p class="stw-sa-excerpt">' . esc_html($ex) . '</p>';
 
             echo '<button type="button" class="stw-sa-readmore" data-post-id="' . (int)$post_id . '">' . esc_html__( 'Mehr Lesen', 'school-announcements' ) . '</button>';
+            echo '</div>';
             echo '</article>';
         }
         echo '</div>';

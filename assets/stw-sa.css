@@ -146,9 +146,40 @@
 .stw-sa-thumb img {
   display: block;
   width: 100%;
-  height: auto;
+  height: 100%;
   object-fit: cover;
   aspect-ratio: 16/9;
+}
+
+/* Desktop Image Layout */
+@media (min-width: 768px) {
+  .stw-sa-item--has-thumb {
+    display: flex;
+    gap: 24px;
+    align-items: stretch;
+  }
+
+  .stw-sa-item--has-thumb .stw-sa-thumb {
+    flex: 0 0 35%;
+    margin: -24px 0 -24px -24px;
+    border-radius: 4px 0 0 8px;
+  }
+
+  .stw-sa-item--has-thumb .stw-sa-thumb img {
+    aspect-ratio: auto;
+  }
+
+  .stw-sa-item--has-thumb .stw-sa-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+
+  .stw-sa-item--has-thumb .stw-sa-readmore {
+    margin-top: auto;
+    align-self: flex-start;
+  }
 }
 
 /* Modal Featured Image */
