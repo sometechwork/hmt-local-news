@@ -135,3 +135,45 @@
 .stw-sa-no-scroll {
   overflow: hidden;
 }
+
+/* Featured Image styling */
+.stw-sa-thumb {
+  margin: -24px -24px 16px -24px;
+  border-radius: 4px 8px 0 0;
+  overflow: hidden;
+}
+
+.stw-sa-thumb img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  aspect-ratio: 16/9;
+}
+
+/* Modal Featured Image */
+.stw-sa-modal__thumb {
+  margin-bottom: 24px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.stw-sa-modal__thumb img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 400px;
+  object-fit: cover;
+}
+
+/* Widget Heading */
+.stw-sa-heading {
+  margin-top: 0;
+  margin-bottom: 24px;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #E4A82E;
+  text-align: center;
+  text-transform: uppercase;
+}
+

@@ -36,7 +36,7 @@ function stw_sa_register_cpt_and_tax()
         'show_in_rest' => true,
         'menu_position' => 20,
         'menu_icon' => 'dashicons-megaphone',
-        'supports' => array('title', 'editor', 'excerpt', 'author', 'revisions'),
+        'supports' => array('title', 'editor', 'excerpt', 'author', 'revisions', 'thumbnail'),
         'has_archive' => false,
         'rewrite' => array('slug' => 'local-news'),
     );
@@ -346,14 +346,17 @@ function stw_sa_shortcode_school_announcements($atts)
     $atts = shortcode_atts(
         array(
         'school' => '', // slug, eg "munich"
-        'limit' => 5,
+        'desktop_limit' => 3,
+        'mobile_limit' => 2,
     ),
         $atts,
         'school_announcements'
     );
 
     $school_slug = sanitize_title($atts['school']);
-    $limit = max(1, min(20, (int)$atts['limit']));
+    $desktop_limit = max(1, min(20, (int)$atts['desktop_limit']));
+    $mobile_limit  = max(1, min(20, (int)$atts['mobile_limit']));
+    $query_limit   = max($desktop_limit, $mobile_limit);
 
     if (empty($school_slug)) {
         return '<div class="stw-sa stw-sa-error">Missing school attribute, example: [school_announcements school="munich"]</div>';
@@ -367,7 +370,7 @@ function stw_sa_shortcode_school_announcements($atts)
     $q = new WP_Query(array(
         'post_type' => 'announcement',
         'post_status' => 'publish',
-        'posts_per_page' => $limit,
+        'posts_per_page' => $query_limit,
         'no_found_rows' => true,
         'tax_query' => array(
                 array(
@@ -378,17 +381,38 @@ function stw_sa_shortcode_school_announcements($atts)
         ),
     ));
 
+    if (!$q->have_posts()) {
+        return '';
+    }
+
     ob_start();
 
-    echo '<div class="stw-sa" data-school="' . esc_attr($school_slug) . '">';
+    $instance_id = uniqid('stw_sa_');
+    echo '<div id="' . esc_attr($instance_id) . '" class="stw-sa" data-school="' . esc_attr($school_slug) . '">';
 
-    if ($q->have_posts()) {
-        echo '<div class="stw-sa-list">';
+    // Scoped styles for responsive display limit
+    echo '<style>
+        @media (max-width: 767px) {
+            #' . esc_attr($instance_id) . ' .stw-sa-item:nth-child(n+' . ($mobile_limit + 1) . ') { display: none; }
+        }
+        @media (min-width: 768px) {
+            #' . esc_attr($instance_id) . ' .stw-sa-item:nth-child(n+' . ($desktop_limit + 1) . ') { display: none; }
+        }
+    </style>';
+
+    echo '<h2 class="stw-sa-heading">' . esc_html__('Neuigkeiten', 'school-announcements') . '</h2>';
+
+    echo '<div class="stw-sa-list">';
         while ($q->have_posts()) {
             $q->the_post();
             $post_id = get_the_ID();
 
             echo '<article class="stw-sa-item">';
+            
+            if (has_post_thumbnail()) {
+                echo '<div class="stw-sa-thumb">' . get_the_post_thumbnail($post_id, 'medium') . '</div>';
+            }
+            
             echo '<h3 class="stw-sa-title">' . esc_html(get_the_title()) . '</h3>';
             echo '<div class="stw-sa-meta">' . esc_html(get_the_date()) . '</div>';
 
@@ -398,15 +422,61 @@ function stw_sa_shortcode_school_announcements($atts)
             }
             echo '<p class="stw-sa-excerpt">' . esc_html($ex) . '</p>';
 
-            echo '<button type="button" class="stw-sa-readmore" data-post-id="' . (int)$post_id . '">Read more</button>';
+            echo '<button type="button" class="stw-sa-readmore" data-post-id="' . (int)$post_id . '">' . esc_html__( 'Mehr Lesen', 'school-announcements' ) . '</button>';
             echo '</article>';
         }
         echo '</div>';
+        
+        // JSON-LD Structured Data for SEO (Option 3)
+        // Fetch all announcements to ensure they are indexable even if not currently visible
+        $all_q = new WP_Query(array(
+            'post_type' => 'announcement',
+            'post_status' => 'publish',
+            'posts_per_page' => -1,
+            'no_found_rows' => true,
+            'tax_query' => array(
+                    array(
+                    'taxonomy' => 'school',
+                    'field' => 'term_id',
+                    'terms' => array((int)$term->term_id),
+                ),
+            ),
+        ));
+
+        if ($all_q->have_posts()) {
+            $schema = array(
+                '@context' => 'https://schema.org',
+                '@type'    => 'ItemList',
+                'itemListElement' => array()
+            );
+            $position = 1;
+            while ($all_q->have_posts()) {
+                $all_q->the_post();
+                
+                $article_id = get_the_ID();
+                $article = array(
+                    '@type' => 'NewsArticle',
+                    'headline' => get_the_title(),
+                    'datePublished' => get_the_date('c'),
+                    'dateModified' => get_the_modified_date('c'),
+                    'text' => wp_strip_all_tags(get_post_field('post_content', $article_id)),
+                );
+                
+                if (has_post_thumbnail($article_id)) {
+                    $article['image'] = get_the_post_thumbnail_url($article_id, 'large');
+                }
+                
+                $schema['itemListElement'][] = array(
+                    '@type' => 'ListItem',
+                    'position' => $position++,
+                    'item' => $article
+                );
+            }
+            wp_reset_postdata();
+            echo '<script type="application/ld+json">' . wp_json_encode($schema, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) . '</script>';
+        }
+
         wp_reset_postdata();
-    }
-    else {
-        echo '<div class="stw-sa-empty">No announcements yet.</div>';
-    }
 
     echo '</div>'; // close .stw-sa
 
@@ -427,6 +497,7 @@ function stw_sa_render_modal_in_footer()
 					<div class="stw-sa-modal__loading" style="display:none;">Loading...</div>
 					<h3 class="stw-sa-modal__title"></h3>
 					<div class="stw-sa-modal__meta"></div>
+					<div class="stw-sa-modal__thumb"></div>
 					<div class="stw-sa-modal__content"></div>
 				</div>
 			</div>
@@ -467,6 +538,7 @@ function stw_sa_rest_get_announcement(WP_REST_Request $request)
         'title' => get_the_title($post_id),
         'date' => get_the_date('', $post_id),
         'content' => apply_filters('the_content', $post->post_content),
+        'thumbnail' => has_post_thumbnail($post_id) ? get_the_post_thumbnail($post_id, 'large') : '',
     );
 }
 

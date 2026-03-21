@@ -26,11 +26,13 @@ jQuery(function ($) {
       const loading = document.querySelector(".stw-sa-modal__loading");
       const titleEl = document.querySelector(".stw-sa-modal__title");
       const metaEl = document.querySelector(".stw-sa-modal__meta");
+      const thumbEl = document.querySelector(".stw-sa-modal__thumb");
       const contentEl = document.querySelector(".stw-sa-modal__content");
 
       if (loading) loading.style.display = "block";
       if (titleEl) titleEl.textContent = "";
       if (metaEl) metaEl.textContent = "";
+      if (thumbEl) thumbEl.innerHTML = "";
       if (contentEl) contentEl.innerHTML = "";
 
       const res = await fetch(STW_SA.restUrl + postId, { method: "GET" });
@@ -44,6 +46,7 @@ jQuery(function ($) {
       if (loading) loading.style.display = "none";
       if (titleEl) titleEl.textContent = data.title || "";
       if (metaEl) metaEl.textContent = data.date || "";
+      if (thumbEl) thumbEl.innerHTML = data.thumbnail || "";
       if (contentEl) contentEl.innerHTML = data.content || "";
     }
 
