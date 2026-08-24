@@ -3,7 +3,7 @@
 /**
  * Plugin Name: Local News
  * Description: Adds an Announcements post type and School taxonomy for per-school news.
- * Version: 0.1.0
+ * Version: 0.1.1
  * Author: Vishal Sanap(STW)
  */
 
@@ -633,7 +633,7 @@ function stw_sa_rest_get_announcement(WP_REST_Request $request)
 
 function stw_sa_register_assets()
 {
-    $ver = '0.1.0';
+    $ver = '0.1.1';
 
     wp_register_script(
         'stw-sa',
