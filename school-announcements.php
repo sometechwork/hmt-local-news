@@ -3,7 +3,7 @@
 /**
  * Plugin Name: Local News
  * Description: Adds an Announcements post type and School taxonomy for per-school news.
- * Version: 0.1.2
+ * Version: 0.1.3
  * Author: Vishal Sanap(STW)
  */
 
@@ -424,43 +424,6 @@ function stw_sa_filter_admin_list_to_school($query)
 }
 add_action('pre_get_posts', 'stw_sa_filter_admin_list_to_school');
 
-function stw_sa_grant_caps_to_administrator()
-{
-    $role = get_role('administrator');
-    if (!$role) {
-        return;
-    }
-
-    $caps = array(
-        'edit_announcements',
-        'edit_announcement',
-        'publish_announcements',
-        'read_announcement',
-        'delete_announcement',
-        'edit_published_announcements',
-        'delete_published_announcements',
-        'delete_announcements',
-        'read_private_announcements',
-        'edit_private_announcements',
-        'delete_private_announcements',
-        'delete_others_announcements',
-        'edit_others_announcements',
-    );
-
-    foreach ($caps as $cap) {
-        $role->add_cap($cap);
-    }
-}
-
-function stw_sa_activate()
-{
-    stw_sa_register_cpt_and_tax();
-    stw_sa_add_roles();
-    stw_sa_grant_caps_to_administrator();
-    flush_rewrite_rules();
-}
-register_activation_hook(__FILE__, 'stw_sa_activate');
-
 function stw_sa_shortcode_school_announcements($atts)
 {
 
@@ -673,7 +636,7 @@ function stw_sa_rest_get_announcement(WP_REST_Request $request)
 
 function stw_sa_register_assets()
 {
-    $ver = '0.1.2';
+    $ver = '0.1.3';
 
     wp_register_script(
         'stw-sa',
