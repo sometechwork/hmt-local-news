@@ -72,14 +72,13 @@ function stw_sa_register_cpt_and_tax()
 }
 add_action('init', 'stw_sa_register_cpt_and_tax');
 
-/**
- * Ensure permalinks flush once on activation so routes work.
- */
-// function stw_sa_activate() {
-// 	stw_sa_register_cpt_and_tax();
-// 	flush_rewrite_rules();
-// }
-// register_activation_hook( __FILE__, 'stw_sa_activate' );
+function stw_sa_activate()
+{
+    stw_sa_register_cpt_and_tax();
+    stw_sa_ensure_roles_and_caps();
+    flush_rewrite_rules();
+}
+register_activation_hook(__FILE__, 'stw_sa_activate');
 
 function stw_sa_deactivate()
 {
@@ -87,9 +86,8 @@ function stw_sa_deactivate()
 }
 register_deactivation_hook(__FILE__, 'stw_sa_deactivate');
 
-function stw_sa_add_roles()
+function stw_sa_get_role_cap_maps()
 {
-
     // Principal (approver)
     $principal_caps = array(
         'read' => true,
@@ -116,32 +114,118 @@ function stw_sa_add_roles()
         'edit_announcement' => true,
         'read_announcement' => true,
         'delete_announcement' => true,
-
-        // No publish caps for teachers
-        // 'publish_announcements' => false
     );
 
-    $principal = get_role('school_principal');
-    if (!$principal) {
-        add_role('school_principal', 'School Principal', $principal_caps);
-    }
-    else {
-        foreach ($principal_caps as $cap => $grant) {
-            $principal->add_cap($cap, $grant);
-        }
-    }
+    // Full CPT cap map for administrators on each subsite.
+    $admin_caps = array(
+        'edit_announcements' => true,
+        'edit_others_announcements' => true,
+        'edit_published_announcements' => true,
+        'edit_private_announcements' => true,
+        'edit_announcement' => true,
+        'publish_announcements' => true,
+        'read_announcement' => true,
+        'read_private_announcements' => true,
+        'delete_announcements' => true,
+        'delete_others_announcements' => true,
+        'delete_published_announcements' => true,
+        'delete_private_announcements' => true,
+        'delete_announcement' => true,
+    );
 
-    $teacher = get_role('school_teacher');
-    if (!$teacher) {
-        add_role('school_teacher', 'School Teacher', $teacher_caps);
-    }
-    else {
-        foreach ($teacher_caps as $cap => $grant) {
-            $teacher->add_cap($cap, $grant);
+    return array(
+        'school_principal' => array('label' => 'School Principal', 'caps' => $principal_caps),
+        'school_teacher' => array('label' => 'School Teacher', 'caps' => $teacher_caps),
+        'administrator' => array('label' => 'Administrator', 'caps' => $admin_caps),
+    );
+}
+
+function stw_sa_ensure_roles_and_caps()
+{
+    foreach (stw_sa_get_role_cap_maps() as $role_key => $role_config) {
+        $role = get_role($role_key);
+
+        if ($role_key === 'administrator') {
+            if (!$role) {
+                continue;
+            }
+            foreach ($role_config['caps'] as $cap => $grant) {
+                $role->add_cap($cap, $grant);
+            }
+            continue;
+        }
+
+        if (!$role) {
+            add_role($role_key, $role_config['label'], $role_config['caps']);
+            continue;
+        }
+
+        foreach ($role_config['caps'] as $cap => $grant) {
+            $role->add_cap($cap, $grant);
         }
     }
 }
-register_activation_hook(__FILE__, 'stw_sa_add_roles');
+add_action('init', 'stw_sa_ensure_roles_and_caps', 5);
+
+function stw_sa_on_new_site($new_site)
+{
+    if (!is_multisite() || empty($new_site->blog_id)) {
+        return;
+    }
+
+    switch_to_blog((int)$new_site->blog_id);
+    stw_sa_activate();
+    restore_current_blog();
+}
+add_action('wp_initialize_site', 'stw_sa_on_new_site', 20);
+
+function stw_sa_is_school_only_user($user = null)
+{
+    $user = $user ?: wp_get_current_user();
+    if (!$user || empty($user->ID)) {
+        return false;
+    }
+
+    $roles = (array)$user->roles;
+    $is_school_user = in_array('school_principal', $roles, true) || in_array('school_teacher', $roles, true);
+
+    return $is_school_user && !in_array('administrator', $roles, true);
+}
+
+function stw_sa_redirect_school_users_from_dashboard()
+{
+    if (!is_admin() || !stw_sa_is_school_only_user()) {
+        return;
+    }
+
+    global $pagenow;
+    if ($pagenow !== 'index.php') {
+        return;
+    }
+
+    wp_safe_redirect(admin_url('edit.php?post_type=announcement'));
+    exit;
+}
+add_action('load-index.php', 'stw_sa_redirect_school_users_from_dashboard');
+
+function stw_sa_restrict_admin_menu()
+{
+    if (!stw_sa_is_school_only_user()) {
+        return;
+    }
+
+    remove_menu_page('index.php');
+    remove_menu_page('edit.php');
+    remove_menu_page('upload.php');
+    remove_menu_page('edit.php?post_type=page');
+    remove_menu_page('edit-comments.php');
+    remove_menu_page('themes.php');
+    remove_menu_page('plugins.php');
+    remove_menu_page('users.php');
+    remove_menu_page('tools.php');
+    remove_menu_page('options-general.php');
+}
+add_action('admin_menu', 'stw_sa_restrict_admin_menu', 999);
 
 /**
  * Tell WordPress to use custom capabilities for the CPT.
