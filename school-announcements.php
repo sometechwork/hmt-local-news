@@ -3,7 +3,7 @@
 /**
  * Plugin Name: Local News
  * Description: Adds an Announcements post type and School taxonomy for per-school news.
- * Version: 0.1.1
+ * Version: 0.1.2
  * Author: Vishal Sanap(STW)
  */
 
@@ -75,7 +75,7 @@ add_action('init', 'stw_sa_register_cpt_and_tax');
 function stw_sa_activate()
 {
     stw_sa_register_cpt_and_tax();
-    stw_sa_ensure_roles_and_caps();
+    stw_sa_ensure_roles_and_caps(true);
     flush_rewrite_rules();
 }
 register_activation_hook(__FILE__, 'stw_sa_activate');
@@ -140,17 +140,44 @@ function stw_sa_get_role_cap_maps()
     );
 }
 
-function stw_sa_ensure_roles_and_caps()
+function stw_sa_apply_caps_to_role($role, $caps)
 {
+    if (!$role || !is_object($role) || !method_exists($role, 'add_cap')) {
+        return;
+    }
+
+    foreach ($caps as $cap => $grant) {
+        if ($grant && $role->has_cap($cap)) {
+            continue;
+        }
+        if (!$grant && !$role->has_cap($cap)) {
+            continue;
+        }
+        $role->add_cap($cap, $grant);
+    }
+}
+
+function stw_sa_ensure_roles_and_caps($force = false)
+{
+    if (!function_exists('get_role') || !function_exists('add_role')) {
+        return;
+    }
+
+    if (defined('WP_INSTALLING') && WP_INSTALLING) {
+        return;
+    }
+
+    $roles_version = '1';
+    if (!$force && get_option('stw_sa_roles_version') === $roles_version) {
+        return;
+    }
+
     foreach (stw_sa_get_role_cap_maps() as $role_key => $role_config) {
         $role = get_role($role_key);
 
         if ($role_key === 'administrator') {
-            if (!$role) {
-                continue;
-            }
-            foreach ($role_config['caps'] as $cap => $grant) {
-                $role->add_cap($cap, $grant);
+            if ($role) {
+                stw_sa_apply_caps_to_role($role, $role_config['caps']);
             }
             continue;
         }
@@ -160,21 +187,34 @@ function stw_sa_ensure_roles_and_caps()
             continue;
         }
 
-        foreach ($role_config['caps'] as $cap => $grant) {
-            $role->add_cap($cap, $grant);
-        }
+        stw_sa_apply_caps_to_role($role, $role_config['caps']);
     }
+
+    update_option('stw_sa_roles_version', $roles_version, false);
 }
-add_action('init', 'stw_sa_ensure_roles_and_caps', 5);
+add_action('init', 'stw_sa_ensure_roles_and_caps', 20);
 
 function stw_sa_on_new_site($new_site)
 {
-    if (!is_multisite() || empty($new_site->blog_id)) {
+    if (!is_multisite() || !function_exists('switch_to_blog')) {
         return;
     }
 
-    switch_to_blog((int)$new_site->blog_id);
-    stw_sa_activate();
+    $blog_id = 0;
+    if (is_object($new_site) && isset($new_site->blog_id)) {
+        $blog_id = (int)$new_site->blog_id;
+    }
+    elseif (is_numeric($new_site)) {
+        $blog_id = (int)$new_site;
+    }
+
+    if ($blog_id <= 0) {
+        return;
+    }
+
+    switch_to_blog($blog_id);
+    stw_sa_register_cpt_and_tax();
+    stw_sa_ensure_roles_and_caps(true);
     restore_current_blog();
 }
 add_action('wp_initialize_site', 'stw_sa_on_new_site', 20);
@@ -633,7 +673,7 @@ function stw_sa_rest_get_announcement(WP_REST_Request $request)
 
 function stw_sa_register_assets()
 {
-    $ver = '0.1.1';
+    $ver = '0.1.2';
 
     wp_register_script(
         'stw-sa',
